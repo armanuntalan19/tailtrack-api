@@ -80,6 +80,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://limegreen-grouse-963064.hostingersite.com"],
+    allow_origin_regex=r"https://.*\.hostingersite\.com",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
