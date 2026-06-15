@@ -13,6 +13,7 @@ class TokenResponse(BaseModel):
     role: str
     first_name: str
     last_name: str
+    phone: str
 
 
 class UserOut(BaseModel):
@@ -20,8 +21,152 @@ class UserOut(BaseModel):
     email: str
     first_name: str | None
     last_name: str | None
+    phone: str | None
     role: str
     is_active: bool
+
+    class Config:
+        from_attributes = True
+
+
+class OwnerBase(BaseModel):
+    full_name: str
+    phone: str
+    email: str = ""
+    sitio: str = ""
+    street: str = ""
+    landmarks: str = ""
+
+
+class OwnerCreate(OwnerBase):
+    pass
+
+
+class OwnerUpdate(BaseModel):
+    full_name: str | None = None
+    phone: str | None = None
+    email: str | None = None
+    sitio: str | None = None
+    street: str | None = None
+    landmarks: str | None = None
+
+
+class OwnerOut(OwnerBase):
+    id: int
+
+    class Config:
+        from_attributes = True
+
+
+class AnimalBase(BaseModel):
+    name: str
+    type: str = "dog"
+    breed: str = ""
+    sex: str = "Male"
+    birthdate: str = ""
+    color: str = ""
+    qr_code: str = ""
+    health_status: str = "unknown"
+    ownership: str = "owned"
+    owner_id: int | None = None
+    owner_name: str = ""
+    owner_contact: str = ""
+    remarks: str = ""
+    image: str = ""
+
+
+class AnimalCreate(AnimalBase):
+    pass
+
+
+class AnimalUpdate(BaseModel):
+    name: str | None = None
+    type: str | None = None
+    breed: str | None = None
+    sex: str | None = None
+    birthdate: str | None = None
+    color: str | None = None
+    qr_code: str | None = None
+    health_status: str | None = None
+    ownership: str | None = None
+    owner_id: int | None = None
+    owner_name: str | None = None
+    owner_contact: str | None = None
+    remarks: str | None = None
+    image: str | None = None
+
+
+class AnimalOut(AnimalBase):
+    id: int
+    registered_date: str
+
+    class Config:
+        from_attributes = True
+
+
+class VaccinationBase(BaseModel):
+    animal_id: int | None = None
+    name: str
+    type: str = "dog"
+    vaccine: str = "Anti-Rabies"
+    category: str = "rabies"
+    lot: str = ""
+    date: str
+    admin: str
+
+
+class VaccinationCreate(VaccinationBase):
+    pass
+
+
+class VaccinationUpdate(BaseModel):
+    animal_id: int | None = None
+    name: str | None = None
+    type: str | None = None
+    vaccine: str | None = None
+    category: str | None = None
+    lot: str | None = None
+    date: str | None = None
+    admin: str | None = None
+
+
+class VaccinationOut(VaccinationBase):
+    id: int
+
+    class Config:
+        from_attributes = True
+
+
+class LostFoundBase(BaseModel):
+    animal_name: str
+    animal_type: str = "Dog"
+    breed: str = ""
+    status: str = "lost"
+    location: str
+    time_lost: str = ""
+    description: str = ""
+    contact: str
+    date: str = ""
+
+
+class LostFoundCreate(LostFoundBase):
+    pass
+
+
+class LostFoundUpdate(BaseModel):
+    animal_name: str | None = None
+    animal_type: str | None = None
+    breed: str | None = None
+    status: str | None = None
+    location: str | None = None
+    time_lost: str | None = None
+    description: str | None = None
+    contact: str | None = None
+    date: str | None = None
+
+
+class LostFoundOut(LostFoundBase):
+    id: int
 
     class Config:
         from_attributes = True

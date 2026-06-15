@@ -6,7 +6,12 @@ from typing import Optional
 from app.database import engine, SessionLocal
 from app import models
 from app.routers import auth as auth_router
+from app.routers import owners as owners_router
+from app.routers import animals as animals_router
+from app.routers import vaccinations as vaccinations_router
+from app.routers import lostfound as lostfound_router
 from app.auth import hash_password, verify_password, decode_token
+from app.deps import get_current_user
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -19,6 +24,7 @@ class ChangePasswordRequest(BaseModel):
 class CreateUserRequest(BaseModel):
     email: str
     name: str
+    phone: str = ""
     password: str
     role: str = "ADMIN"
 
@@ -26,18 +32,9 @@ class CreateUserRequest(BaseModel):
 class UpdateUserRequest(BaseModel):
     email: Optional[str] = None
     name: Optional[str] = None
+    phone: Optional[str] = None
     password: Optional[str] = None
     role: Optional[str] = None
-
-
-def get_current_user(authorization: Optional[str] = Header(None)):
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Not authenticated. Please log in.")
-    token = authorization.split(" ")[1]
-    payload = decode_token(token)
-    if not payload:
-        raise HTTPException(status_code=401, detail="Session expired. Please log in again.")
-    return payload
 
 
 @asynccontextmanager
@@ -55,6 +52,7 @@ async def lifespan(app: FastAPI):
                 first_name="Son",
                 last_name="Gohan",
                 role="ADMIN",
+                phone="09291928345",
             )
             db.add(admin)
             db.commit()
@@ -87,6 +85,10 @@ app.add_middleware(
 )
 
 app.include_router(auth_router.router)
+app.include_router(owners_router.router)
+app.include_router(animals_router.router)
+app.include_router(vaccinations_router.router)
+app.include_router(lostfound_router.router)
 
 
 @app.post("/changepass")
@@ -129,6 +131,7 @@ def list_users(payload: dict = Depends(get_current_user)):
                 "id": u.id,
                 "email": u.email,
                 "name": f"{u.first_name or ''} {u.last_name or ''}".strip(),
+                "phone": u.phone or "",
                 "role": u.role,
             }
             for u in users
@@ -154,6 +157,7 @@ def register_user(data: CreateUserRequest, payload: dict = Depends(get_current_u
             password=hash_password(data.password),
             first_name=first,
             last_name=last,
+            phone=data.phone or "",
             role=data.role.upper(),
         )
         db.add(new_user)
@@ -164,6 +168,7 @@ def register_user(data: CreateUserRequest, payload: dict = Depends(get_current_u
             "id": new_user.id,
             "email": new_user.email,
             "name": f"{new_user.first_name} {new_user.last_name}".strip(),
+            "phone": new_user.phone or "",
             "role": new_user.role,
         }
     finally:
@@ -192,6 +197,9 @@ def update_user(user_id: int, data: UpdateUserRequest, payload: dict = Depends(g
             user.first_name = parts[0]
             user.last_name  = parts[1] if len(parts) > 1 else ""
 
+        if data.phone is not None:
+            user.phone = data.phone
+
         if data.password:
             user.password = hash_password(data.password)
 
@@ -205,6 +213,7 @@ def update_user(user_id: int, data: UpdateUserRequest, payload: dict = Depends(g
             "id": user.id,
             "email": user.email,
             "name": f"{user.first_name} {user.last_name}".strip(),
+            "phone": user.phone or "",
             "role": user.role,
         }
     finally:
