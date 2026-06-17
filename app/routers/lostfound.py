@@ -32,7 +32,7 @@ def get_report(report_id: int, payload: dict = Depends(get_current_user)):
 def create_report(data: schemas.LostFoundCreate, payload: dict = Depends(get_current_user)):
     db = SessionLocal()
     try:
-        report_date = data.date or date.today().strftime("%b %d, %Y")
+        report_date = data.date or date.today()
         report = models.LostFoundReport(**{**data.model_dump(), "date": report_date})
         db.add(report)
         db.commit()

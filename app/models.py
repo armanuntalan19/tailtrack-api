@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Text
+from sqlalchemy import Column, Integer, String, Boolean, Date, DateTime, ForeignKey, Text
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from app.database import Base
@@ -41,7 +41,7 @@ class Animal(Base):
     species         = Column(String, default="dog")
     breed           = Column(String, default="")
     sex             = Column(String, default="Male")
-    birthdate       = Column(String, default="")
+    birthdate       = Column(Date, nullable=True)
     color_markings  = Column(String, default="")
     qr_code         = Column(String, default="")
     health_status   = Column(String, default="unknown")
@@ -51,7 +51,7 @@ class Animal(Base):
     owner_contact   = Column(String, default="")
     remarks         = Column(Text, default="")
     image           = Column(Text, default="")
-    registered_date = Column(String, default="")
+    registered_date = Column(Date, nullable=True)
     created_at      = Column(DateTime(timezone=True), server_default=func.now())
 
     owner        = relationship("Owner", back_populates="animals")
@@ -68,7 +68,7 @@ class Vaccination(Base):
     vaccine         = Column(String, default="Anti-Rabies")
     category        = Column(String, default="rabies")
     lot_number      = Column(String, default="")
-    date            = Column(String, nullable=False)
+    date            = Column(Date, nullable=False)
     administered_by = Column(String, nullable=False)
     created_at      = Column(DateTime(timezone=True), server_default=func.now())
 
@@ -84,8 +84,8 @@ class LostFoundReport(Base):
     breed           = Column(String, default="")
     status          = Column(String, default="lost")
     sitio_area      = Column(String, nullable=False)
-    time_lost       = Column(String, default="")
+    time_lost       = Column(DateTime(timezone=True), nullable=True)
     description     = Column(Text, default="")
     contact_person  = Column(String, nullable=False)
-    date            = Column(String, default="")
+    date            = Column(Date, nullable=True)
     created_at      = Column(DateTime(timezone=True), server_default=func.now())

@@ -39,7 +39,7 @@ def create_animal(data: schemas.AnimalCreate, payload: dict = Depends(get_curren
 
         animal = models.Animal(
             **data.model_dump(),
-            registered_date=date.today().strftime("%b %d, %Y"),
+            registered_date=date.today(),
         )
         db.add(animal)
         db.commit()
