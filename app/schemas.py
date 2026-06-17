@@ -21,7 +21,7 @@ class UserOut(BaseModel):
     email: str
     first_name: str | None
     last_name: str | None
-    phone: str | None
+    phone_number: str | None
     role: str
     is_active: bool
 
@@ -31,10 +31,10 @@ class UserOut(BaseModel):
 
 class OwnerBase(BaseModel):
     full_name: str
-    phone: str
+    phone_number: str
     email: str = ""
     sitio: str = ""
-    street: str = ""
+    residency_street: str = ""
     landmarks: str = ""
 
 
@@ -44,10 +44,10 @@ class OwnerCreate(OwnerBase):
 
 class OwnerUpdate(BaseModel):
     full_name: str | None = None
-    phone: str | None = None
+    phone_number: str | None = None
     email: str | None = None
     sitio: str | None = None
-    street: str | None = None
+    residency_street: str | None = None
     landmarks: str | None = None
 
 
@@ -59,12 +59,12 @@ class OwnerOut(OwnerBase):
 
 
 class AnimalBase(BaseModel):
-    name: str
-    type: str = "dog"
+    animal_name: str
+    species: str = "dog"
     breed: str = ""
     sex: str = "Male"
     birthdate: str = ""
-    color: str = ""
+    color_markings: str = ""
     qr_code: str = ""
     health_status: str = "unknown"
     ownership: str = "owned"
@@ -80,12 +80,12 @@ class AnimalCreate(AnimalBase):
 
 
 class AnimalUpdate(BaseModel):
-    name: str | None = None
-    type: str | None = None
+    animal_name: str | None = None
+    species: str | None = None
     breed: str | None = None
     sex: str | None = None
     birthdate: str | None = None
-    color: str | None = None
+    color_markings: str | None = None
     qr_code: str | None = None
     health_status: str | None = None
     ownership: str | None = None
@@ -106,13 +106,13 @@ class AnimalOut(AnimalBase):
 
 class VaccinationBase(BaseModel):
     animal_id: int | None = None
-    name: str
-    type: str = "dog"
+    animal_name: str
+    animel_type: str = "dog"
     vaccine: str = "Anti-Rabies"
     category: str = "rabies"
-    lot: str = ""
+    lot_number: str = ""
     date: str
-    admin: str
+    administered_by: str
 
 
 class VaccinationCreate(VaccinationBase):
@@ -121,13 +121,13 @@ class VaccinationCreate(VaccinationBase):
 
 class VaccinationUpdate(BaseModel):
     animal_id: int | None = None
-    name: str | None = None
-    type: str | None = None
+    animal_name: str | None = None
+    animel_type: str | None = None
     vaccine: str | None = None
     category: str | None = None
-    lot: str | None = None
+    lot_number: str | None = None
     date: str | None = None
-    admin: str | None = None
+    administered_by: str | None = None
 
 
 class VaccinationOut(VaccinationBase):
@@ -142,10 +142,10 @@ class LostFoundBase(BaseModel):
     animal_type: str = "Dog"
     breed: str = ""
     status: str = "lost"
-    location: str
+    sitio_area: str
     time_lost: str = ""
     description: str = ""
-    contact: str
+    contact_person: str
     date: str = ""
 
 
@@ -158,10 +158,10 @@ class LostFoundUpdate(BaseModel):
     animal_type: str | None = None
     breed: str | None = None
     status: str | None = None
-    location: str | None = None
+    sitio_area: str | None = None
     time_lost: str | None = None
     description: str | None = None
-    contact: str | None = None
+    contact_person: str | None = None
     date: str | None = None
 
 

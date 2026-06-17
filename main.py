@@ -3,17 +3,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from pydantic import BaseModel
 from typing import Optional
-from app.database import engine, SessionLocal
+from app.database import SessionLocal
 from app import models
 from app.routers import auth as auth_router
 from app.routers import owners as owners_router
 from app.routers import animals as animals_router
 from app.routers import vaccinations as vaccinations_router
 from app.routers import lostfound as lostfound_router
-from app.auth import hash_password, verify_password, decode_token
+from app.auth import verify_password, decode_token
 from app.deps import get_current_user
-
-models.Base.metadata.create_all(bind=engine)
 
 
 class ChangePasswordRequest(BaseModel):
@@ -48,11 +46,11 @@ async def lifespan(app: FastAPI):
         if not admin:
             admin = models.User(
                 email="admin@pcst.com",
-                password=hash_password("admin123"),
+                password="admin123",
                 first_name="Son",
                 last_name="Gohan",
                 role="ADMIN",
-                phone="09291928345",
+                phone_number="09291928345",
             )
             db.add(admin)
             db.commit()
@@ -114,7 +112,7 @@ def post_change_password(
             raise HTTPException(status_code=404, detail="User not found.")
         if not verify_password(data.current_password, user.password):
             raise HTTPException(status_code=400, detail="Current password is incorrect.")
-        user.password = hash_password(data.new_password)
+        user.password = data.new_password
         db.commit()
         return {"message": "Password updated successfully."}
     finally:
@@ -131,7 +129,7 @@ def list_users(payload: dict = Depends(get_current_user)):
                 "id": u.id,
                 "email": u.email,
                 "name": f"{u.first_name or ''} {u.last_name or ''}".strip(),
-                "phone": u.phone or "",
+                "phone": u.phone_number or "",
                 "role": u.role,
             }
             for u in users
@@ -154,10 +152,10 @@ def register_user(data: CreateUserRequest, payload: dict = Depends(get_current_u
 
         new_user = models.User(
             email=data.email,
-            password=hash_password(data.password),
+            password=data.password,
             first_name=first,
             last_name=last,
-            phone=data.phone or "",
+            phone_number=data.phone or "",
             role=data.role.upper(),
         )
         db.add(new_user)
@@ -168,7 +166,7 @@ def register_user(data: CreateUserRequest, payload: dict = Depends(get_current_u
             "id": new_user.id,
             "email": new_user.email,
             "name": f"{new_user.first_name} {new_user.last_name}".strip(),
-            "phone": new_user.phone or "",
+            "phone": new_user.phone_number or "",
             "role": new_user.role,
         }
     finally:
@@ -198,10 +196,10 @@ def update_user(user_id: int, data: UpdateUserRequest, payload: dict = Depends(g
             user.last_name  = parts[1] if len(parts) > 1 else ""
 
         if data.phone is not None:
-            user.phone = data.phone
+            user.phone_number = data.phone
 
         if data.password:
-            user.password = hash_password(data.password)
+            user.password = data.password
 
         if data.role:
             user.role = data.role.upper()
@@ -213,7 +211,7 @@ def update_user(user_id: int, data: UpdateUserRequest, payload: dict = Depends(g
             "id": user.id,
             "email": user.email,
             "name": f"{user.first_name} {user.last_name}".strip(),
-            "phone": user.phone or "",
+            "phone": user.phone_number or "",
             "role": user.role,
         }
     finally:

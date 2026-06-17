@@ -35,7 +35,7 @@ def login(body: schemas.LoginRequest, db: Session = Depends(get_db)):
         role=user.role,
         first_name=user.first_name or "",
         last_name=user.last_name or "",
-        phone=user.phone or "",
+        phone=user.phone_number or "",
     )
 
 @router.get("/me", response_model=schemas.UserOut)
