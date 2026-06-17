@@ -13,7 +13,6 @@ class User(Base):
     first_name   = Column(String, default="")
     last_name    = Column(String, default="")
     role         = Column(String, default="officer")
-    is_active    = Column(Boolean, default=True)
     created_at   = Column(DateTime(timezone=True), server_default=func.now())
     phone_number = Column(String, default="")
 
@@ -51,7 +50,6 @@ class Animal(Base):
     owner_contact   = Column(String, default="")
     remarks         = Column(Text, default="")
     image           = Column(Text, default="")
-    registered_date = Column(Date, nullable=True)
     created_at      = Column(DateTime(timezone=True), server_default=func.now())
 
     owner        = relationship("Owner", back_populates="animals")
@@ -87,5 +85,4 @@ class LostFoundReport(Base):
     time_lost       = Column(DateTime(timezone=True), nullable=True)
     description     = Column(Text, default="")
     contact_person  = Column(String, nullable=False)
-    date            = Column(Date, nullable=True)
     created_at      = Column(DateTime(timezone=True), server_default=func.now())
