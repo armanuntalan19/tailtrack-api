@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from datetime import date, datetime
+from datetime import date as date_type, datetime as datetime_type
 
 
 class LoginRequest(BaseModel):
@@ -64,7 +64,7 @@ class AnimalBase(BaseModel):
     species: str = "dog"
     breed: str = ""
     sex: str = "Male"
-    birthdate: date | None = None
+    birthdate: date_type | None = None
     color_markings: str = ""
     qr_code: str = ""
     health_status: str = "unknown"
@@ -85,7 +85,7 @@ class AnimalUpdate(BaseModel):
     species: str | None = None
     breed: str | None = None
     sex: str | None = None
-    birthdate: date | None = None
+    birthdate: date_type | None = None
     color_markings: str | None = None
     qr_code: str | None = None
     health_status: str | None = None
@@ -99,7 +99,7 @@ class AnimalUpdate(BaseModel):
 
 class AnimalOut(AnimalBase):
     id: int
-    registered_date: date | None = None
+    registered_date: date_type | None = None
 
     class Config:
         from_attributes = True
@@ -112,7 +112,7 @@ class VaccinationBase(BaseModel):
     vaccine: str = "Anti-Rabies"
     category: str = "rabies"
     lot_number: str = ""
-    date: date
+    date: date_type
     administered_by: str
 
 
@@ -127,7 +127,7 @@ class VaccinationUpdate(BaseModel):
     vaccine: str | None = None
     category: str | None = None
     lot_number: str | None = None
-    date: date | None = None
+    date: date_type | None = None
     administered_by: str | None = None
 
 
@@ -144,10 +144,10 @@ class LostFoundBase(BaseModel):
     breed: str = ""
     status: str = "lost"
     sitio_area: str
-    time_lost: datetime | None = None
+    time_lost: datetime_type | None = None
     description: str = ""
     contact_person: str
-    date: date | None = None
+    date: date_type | None = None
 
 
 class LostFoundCreate(LostFoundBase):
@@ -160,10 +160,10 @@ class LostFoundUpdate(BaseModel):
     breed: str | None = None
     status: str | None = None
     sitio_area: str | None = None
-    time_lost: datetime | None = None
+    time_lost: datetime_type | None = None
     description: str | None = None
     contact_person: str | None = None
-    date: date | None = None
+    date: date_type | None = None
 
 
 class LostFoundOut(LostFoundBase):
