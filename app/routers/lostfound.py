@@ -1,4 +1,3 @@
-from datetime import date
 from fastapi import APIRouter, HTTPException, Depends
 from app.database import SessionLocal
 from app import models, schemas
@@ -32,8 +31,7 @@ def get_report(report_id: int, payload: dict = Depends(get_current_user)):
 def create_report(data: schemas.LostFoundCreate, payload: dict = Depends(get_current_user)):
     db = SessionLocal()
     try:
-        report_date = data.date or date.today()
-        report = models.LostFoundReport(**{**data.model_dump(), "date": report_date})
+        report = models.LostFoundReport(**data.model_dump())
         db.add(report)
         db.commit()
         db.refresh(report)

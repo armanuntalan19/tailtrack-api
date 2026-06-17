@@ -13,6 +13,7 @@ class User(Base):
     first_name   = Column(String, default="")
     last_name    = Column(String, default="")
     role         = Column(String, default="officer")
+    is_active    = Column(Boolean, default=True)
     created_at   = Column(DateTime(timezone=True), server_default=func.now())
     phone_number = Column(String, default="")
 

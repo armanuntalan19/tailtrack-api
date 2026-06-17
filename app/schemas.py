@@ -99,7 +99,6 @@ class AnimalUpdate(BaseModel):
 
 class AnimalOut(AnimalBase):
     id: int
-    registered_date: date_type | None = None
 
     class Config:
         from_attributes = True
@@ -147,7 +146,6 @@ class LostFoundBase(BaseModel):
     time_lost: datetime_type | None = None
     description: str = ""
     contact_person: str
-    date: date_type | None = None
 
 
 class LostFoundCreate(LostFoundBase):
@@ -163,7 +161,6 @@ class LostFoundUpdate(BaseModel):
     time_lost: datetime_type | None = None
     description: str | None = None
     contact_person: str | None = None
-    date: date_type | None = None
 
 
 class LostFoundOut(LostFoundBase):

@@ -1,4 +1,3 @@
-from datetime import date
 from fastapi import APIRouter, HTTPException, Depends
 from app.database import SessionLocal
 from app import models, schemas
@@ -37,10 +36,7 @@ def create_animal(data: schemas.AnimalCreate, payload: dict = Depends(get_curren
             if not owner:
                 raise HTTPException(status_code=400, detail="Owner not found.")
 
-        animal = models.Animal(
-            **data.model_dump(),
-            registered_date=date.today(),
-        )
+        animal = models.Animal(**data.model_dump())
         db.add(animal)
         db.commit()
         db.refresh(animal)
