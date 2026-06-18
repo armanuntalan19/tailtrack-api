@@ -74,15 +74,20 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# --- CORS setup ---
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://limegreen-grouse-963064.hostingersite.com"],
+    allow_origins=[
+        "https://limegreen-grouse-963064.hostingersite.com",
+        "http://localhost:3000"
+    ],
     allow_origin_regex=r"https://.*\.hostingersite\.com",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# --- Routers ---
 app.include_router(auth_router.router)
 app.include_router(owners_router.router)
 app.include_router(animals_router.router)
