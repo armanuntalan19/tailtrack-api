@@ -77,11 +77,12 @@ app = FastAPI(
 # --- CORS setup ---
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # TEMPORARY: allow all origins
+    allow_origins=["*"],   # TEMPORARY: allow all domains
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 # --- Routers ---
 app.include_router(auth_router.router)
