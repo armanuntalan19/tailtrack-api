@@ -77,11 +77,7 @@ app = FastAPI(
 # --- CORS setup ---
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://limegreen-grouse-963064.hostingersite.com",
-        "http://localhost:3000"
-    ],
-    allow_origin_regex=r"https://.*\.hostingersite\.com",
+    allow_origins=["*"],  # TEMPORARY: allow all origins
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
