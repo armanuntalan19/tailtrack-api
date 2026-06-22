@@ -62,18 +62,18 @@ class OwnerOut(OwnerBase):
 class AnimalBase(BaseModel):
     animal_name: str
     species: str = "dog"
-    breed: str = ""
-    sex: str = "Male"
+    breed: str | None = ""
+    sex: str | None = "Male"
     birthdate: date_type | None = None
-    color_markings: str = ""
-    qr_code: str = ""
-    health_status: str = "unknown"
-    ownership: str = "owned"
+    color_markings: str | None = ""
+    qr_code: str | None = ""
+    health_status: str | None = "unknown"
+    ownership: str | None = "owned"
     owner_id: int | None = None
-    owner_name: str = ""
-    owner_contact: str = ""
-    remarks: str = ""
-    image: str = ""
+    owner_name: str | None = ""
+    owner_contact: str | None = ""
+    remarks: str | None = ""
+    image: str | None = ""
 
 
 class AnimalCreate(AnimalBase):
@@ -107,10 +107,10 @@ class AnimalOut(AnimalBase):
 class VaccinationBase(BaseModel):
     animal_id: int | None = None
     animal_name: str
-    animel_type: str = "dog"
-    vaccine: str = "Anti-Rabies"
-    category: str = "rabies"
-    lot_number: str = ""
+    animel_type: str | None = "dog"
+    vaccine: str | None = "Anti-Rabies"
+    category: str | None = "rabies"
+    lot_number: str | None = ""
     date: date_type
     administered_by: str
 
@@ -139,12 +139,12 @@ class VaccinationOut(VaccinationBase):
 
 class LostFoundBase(BaseModel):
     animal_name: str
-    animal_type: str = "Dog"
-    breed: str = ""
-    status: str = "lost"
+    animal_type: str | None = "Dog"
+    breed: str | None = ""
+    status: str | None = "lost"
     sitio_area: str
     time_lost: datetime_type | None = None
-    description: str = ""
+    description: str | None = ""
     contact_person: str
 
 
