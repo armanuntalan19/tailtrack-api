@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from pydantic import BaseModel
 from typing import Optional
-from app.database import SessionLocal
+from app.database import SessionLocal, create_tables
 from app import models
 from app.routers import auth as auth_router
 from app.routers import owners as owners_router
@@ -37,6 +37,11 @@ class UpdateUserRequest(BaseModel):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # ── 1. Ensure all tables exist ────────────────────────────────
+    create_tables()
+    print("✅ Database tables verified / created")
+
+    # ── 2. Seed default admin if missing ─────────────────────────
     db = SessionLocal()
     try:
         admin = db.query(models.User).filter(
@@ -56,7 +61,7 @@ async def lifespan(app: FastAPI):
             db.commit()
             print("✅ Default admin seeded: admin@pcst.com / admin123")
         else:
-            print("ℹ️ Admin already exists")
+            print("ℹ️  Admin already exists")
 
     finally:
         db.close()
@@ -75,7 +80,9 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://limegreen-grouse-963064.hostingersite.com"],
+    allow_origins=[
+        "https://limegreen-grouse-963064.hostingersite.com",
+    ],
     allow_origin_regex=r"https://.*\.hostingersite\.com",
     allow_credentials=True,
     allow_methods=["*"],
@@ -89,6 +96,7 @@ app.include_router(vaccinations_router.router)
 app.include_router(lostfound_router.router)
 
 
+# ── Change Password ───────────────────────────────────────────────
 @app.post("/changepass")
 def post_change_password(
     data: ChangePasswordRequest,
@@ -119,6 +127,7 @@ def post_change_password(
         db.close()
 
 
+# ── User Management ───────────────────────────────────────────────
 @app.get("/auth/users")
 def list_users(payload: dict = Depends(get_current_user)):
     db = SessionLocal()
@@ -238,6 +247,61 @@ def delete_user(user_id: int, payload: dict = Depends(get_current_user)):
         db.close()
 
 
+# ── Dashboard Stats ───────────────────────────────────────────────
+@app.get("/dashboard/stats")
+def dashboard_stats(payload: dict = Depends(get_current_user)):
+    """Single endpoint that returns all dashboard numbers at once."""
+    db = SessionLocal()
+    try:
+        from sqlalchemy import func
+
+        total_animals  = db.query(func.count(models.Animal.id)).scalar() or 0
+        owned_animals  = db.query(func.count(models.Animal.id)).filter(models.Animal.ownership == "owned").scalar() or 0
+        stray_animals  = db.query(func.count(models.Animal.id)).filter(models.Animal.ownership == "stray").scalar() or 0
+
+        # Unique animal IDs that have at least one vaccination
+        vaccinated_ids = db.query(models.Vaccination.animal_id).filter(
+            models.Vaccination.animal_id.isnot(None)
+        ).distinct().all()
+        vaccinated_count = len(vaccinated_ids)
+        unvaccinated     = total_animals - vaccinated_count
+        vacc_percent     = round((vaccinated_count / total_animals * 100)) if total_animals else 0
+
+        total_vacc    = db.query(func.count(models.Vaccination.id)).scalar() or 0
+        still_lost    = db.query(func.count(models.LostFoundReport.id)).filter(
+            models.LostFoundReport.status == "lost"
+        ).scalar() or 0
+
+        # Recent — last 5 animals with QR codes
+        recent = db.query(models.Animal).filter(
+            models.Animal.qr_code != ""
+        ).order_by(models.Animal.id.desc()).limit(5).all()
+
+        return {
+            "total_animals":     total_animals,
+            "owned_animals":     owned_animals,
+            "stray_animals":     stray_animals,
+            "vaccinated_count":  vaccinated_count,
+            "unvaccinated":      unvaccinated,
+            "vacc_percent":      vacc_percent,
+            "total_vaccinations": total_vacc,
+            "still_lost":        still_lost,
+            "recent_qr": [
+                {
+                    "id":      a.id,
+                    "name":    a.animal_name,
+                    "species": a.species,
+                    "qr_code": a.qr_code,
+                    "created_at": a.created_at.isoformat() if a.created_at else None,
+                }
+                for a in recent
+            ],
+        }
+    finally:
+        db.close()
+
+
+# ── Health ────────────────────────────────────────────────────────
 @app.get("/health")
 def health():
     return {"status": "ok", "app": "TailTrack API 🐾"}
