@@ -11,7 +11,7 @@ from app.routers import animals as animals_router
 from app.routers import vaccinations as vaccinations_router
 from app.routers import lostfound as lostfound_router
 from app.auth import verify_password, decode_token
-from app.deps import get_current_user
+from app.deps import get_current_user, admin_only
 
 
 class ChangePasswordRequest(BaseModel):
@@ -80,11 +80,8 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://limegreen-grouse-963064.hostingersite.com",
-    ],
-    allow_origin_regex=r"https://.*\.hostingersite\.com",
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["*"],
@@ -130,7 +127,7 @@ def post_change_password(
 
 # ── User Management ───────────────────────────────────────────────
 @app.get("/auth/users")
-def list_users(payload: dict = Depends(get_current_user)):
+def list_users(payload: dict = Depends(admin_only)):
     db = SessionLocal()
     try:
         users = db.query(models.User).all()
@@ -149,7 +146,7 @@ def list_users(payload: dict = Depends(get_current_user)):
 
 
 @app.post("/auth/register", status_code=201)
-def register_user(data: CreateUserRequest, payload: dict = Depends(get_current_user)):
+def register_user(data: CreateUserRequest, payload: dict = Depends(admin_only)):
     db = SessionLocal()
     try:
         existing = db.query(models.User).filter(models.User.email == data.email).first()
@@ -184,7 +181,7 @@ def register_user(data: CreateUserRequest, payload: dict = Depends(get_current_u
 
 
 @app.put("/auth/users/{user_id}")
-def update_user(user_id: int, data: UpdateUserRequest, payload: dict = Depends(get_current_user)):
+def update_user(user_id: int, data: UpdateUserRequest, payload: dict = Depends(admin_only)):
     db = SessionLocal()
     try:
         user = db.query(models.User).filter(models.User.id == user_id).first()
@@ -229,7 +226,7 @@ def update_user(user_id: int, data: UpdateUserRequest, payload: dict = Depends(g
 
 
 @app.delete("/auth/users/{user_id}")
-def delete_user(user_id: int, payload: dict = Depends(get_current_user)):
+def delete_user(user_id: int, payload: dict = Depends(admin_only)):
     logged_in_email = payload.get("sub")
 
     db = SessionLocal()
@@ -250,7 +247,7 @@ def delete_user(user_id: int, payload: dict = Depends(get_current_user)):
 
 # ── Dashboard Stats ───────────────────────────────────────────────
 @app.get("/dashboard/stats")
-def dashboard_stats(payload: dict = Depends(get_current_user)):
+def dashboard_stats(payload: dict = Depends(get_current_user)): # all roles
     """Single endpoint that returns all dashboard numbers at once."""
     db = SessionLocal()
     try:
