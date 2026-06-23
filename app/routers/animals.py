@@ -6,6 +6,33 @@ from app.deps import get_current_user
 router = APIRouter(prefix="/animals", tags=["animals"])
 
 
+@router.get("/public/{animal_id}")
+def get_animal_public(animal_id: int):
+    """Public endpoint — no auth. Used by QR code scans."""
+    db = SessionLocal()
+    try:
+        animal = db.query(models.Animal).filter(models.Animal.id == animal_id).first()
+        if not animal:
+            raise HTTPException(status_code=404, detail="Animal not found.")
+        return {
+            "id":            animal.id,
+            "animal_name":   animal.animal_name,
+            "species":       animal.species,
+            "breed":         animal.breed,
+            "sex":           animal.sex,
+            "birthdate":     str(animal.birthdate) if animal.birthdate else None,
+            "color_markings": animal.color_markings,
+            "health_status": animal.health_status,
+            "ownership":     animal.ownership,
+            "owner_name":    animal.owner_name,
+            "owner_contact": animal.owner_contact,
+            "remarks":       animal.remarks,
+            "image":         animal.image,
+        }
+    finally:
+        db.close()
+
+
 @router.get("", response_model=list[schemas.AnimalOut])
 def list_animals(payload: dict = Depends(get_current_user)):
     db = SessionLocal()
