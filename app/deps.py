@@ -29,3 +29,9 @@ def admin_vet_caretaker(payload: dict = Depends(get_current_user)) -> dict:
     if (payload.get("role") or "").upper() not in ("ADMIN", "VETERINARIAN", "CARETAKER"):
         raise HTTPException(status_code=403, detail="Access denied.")
     return payload
+
+
+def admin_or_caretaker(payload: dict = Depends(get_current_user)) -> dict:
+    if (payload.get("role") or "").upper() not in ("ADMIN", "CARETAKER"):
+        raise HTTPException(status_code=403, detail="Access denied. Admins and Caretakers only.")
+    return payload

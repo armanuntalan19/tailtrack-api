@@ -248,7 +248,13 @@ def delete_user(user_id: int, payload: dict = Depends(admin_only)):
 # ── Dashboard Stats ───────────────────────────────────────────────
 @app.get("/dashboard/stats")
 def dashboard_stats(payload: dict = Depends(get_current_user)): # all roles
-    """Single endpoint that returns all dashboard numbers at once."""
+    """Single endpoint that returns all dashboard numbers at once.
+
+    All roles see full stats, but the 'Recent Scan Activity' feed is
+    Admin-only — non-admins never receive that part of the payload.
+    """
+    is_admin = (payload.get("role") or "").upper() == "ADMIN"
+
     db = SessionLocal()
     try:
         from sqlalchemy import func
@@ -270,10 +276,22 @@ def dashboard_stats(payload: dict = Depends(get_current_user)): # all roles
             models.LostFoundReport.status == "lost"
         ).scalar() or 0
 
-        # Recent — last 5 animals with QR codes
-        recent = db.query(models.Animal).filter(
-            models.Animal.qr_code != ""
-        ).order_by(models.Animal.id.desc()).limit(5).all()
+        recent_qr = []
+        if is_admin:
+            # Recent — last 5 animals with QR codes (Admin-only feed)
+            recent = db.query(models.Animal).filter(
+                models.Animal.qr_code != ""
+            ).order_by(models.Animal.id.desc()).limit(5).all()
+            recent_qr = [
+                {
+                    "id":      a.id,
+                    "name":    a.animal_name,
+                    "species": a.species,
+                    "qr_code": a.qr_code,
+                    "created_at": a.created_at.isoformat() if a.created_at else None,
+                }
+                for a in recent
+            ]
 
         return {
             "total_animals":     total_animals,
@@ -284,16 +302,7 @@ def dashboard_stats(payload: dict = Depends(get_current_user)): # all roles
             "vacc_percent":      vacc_percent,
             "total_vaccinations": total_vacc,
             "still_lost":        still_lost,
-            "recent_qr": [
-                {
-                    "id":      a.id,
-                    "name":    a.animal_name,
-                    "species": a.species,
-                    "qr_code": a.qr_code,
-                    "created_at": a.created_at.isoformat() if a.created_at else None,
-                }
-                for a in recent
-            ],
+            "recent_qr": recent_qr,
         }
     finally:
         db.close()

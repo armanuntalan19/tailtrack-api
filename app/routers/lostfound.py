@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from app.database import SessionLocal
 from app import models, schemas
-from app.deps import get_current_user, admin_only, admin_vet_caretaker
+from app.deps import get_current_user, admin_only, admin_or_caretaker
 
 router = APIRouter(prefix="/lost-found", tags=["lost-and-found"])
 
@@ -29,8 +29,8 @@ def get_report(report_id: int, payload: dict = Depends(get_current_user)):
 
 
 @router.post("", response_model=schemas.LostFoundOut, status_code=201)
-def create_report(data: schemas.LostFoundCreate, payload: dict = Depends(admin_vet_caretaker)):
-    # Admin + Vet + Caretaker: add reports
+def create_report(data: schemas.LostFoundCreate, payload: dict = Depends(admin_or_caretaker)):
+    # Admin + Caretaker: add reports. Vet/Viewer: view only.
     db = SessionLocal()
     try:
         report = models.LostFoundReport(**data.model_dump())

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from app.database import SessionLocal
 from app import models, schemas
-from app.deps import get_current_user
+from app.deps import get_current_user, admin_or_vet, admin_only
 
 router = APIRouter(prefix="/animals", tags=["animals"])
 
@@ -55,7 +55,8 @@ def get_animal(animal_id: int, payload: dict = Depends(get_current_user)):
 
 
 @router.post("", response_model=schemas.AnimalOut, status_code=201)
-def create_animal(data: schemas.AnimalCreate, payload: dict = Depends(get_current_user)):
+def create_animal(data: schemas.AnimalCreate, payload: dict = Depends(admin_or_vet)):
+    # Admin + Vet: add/edit. Caretaker/Viewer: view only.
     db = SessionLocal()
     try:
         if data.owner_id is not None:
@@ -73,7 +74,7 @@ def create_animal(data: schemas.AnimalCreate, payload: dict = Depends(get_curren
 
 
 @router.put("/{animal_id}", response_model=schemas.AnimalOut)
-def update_animal(animal_id: int, data: schemas.AnimalUpdate, payload: dict = Depends(get_current_user)):
+def update_animal(animal_id: int, data: schemas.AnimalUpdate, payload: dict = Depends(admin_or_vet)):
     db = SessionLocal()
     try:
         animal = db.query(models.Animal).filter(models.Animal.id == animal_id).first()
@@ -98,7 +99,8 @@ def update_animal(animal_id: int, data: schemas.AnimalUpdate, payload: dict = De
 
 
 @router.delete("/{animal_id}")
-def delete_animal(animal_id: int, payload: dict = Depends(get_current_user)):
+def delete_animal(animal_id: int, payload: dict = Depends(admin_only)):
+    # Admin only: delete
     db = SessionLocal()
     try:
         animal = db.query(models.Animal).filter(models.Animal.id == animal_id).first()
