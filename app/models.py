@@ -87,3 +87,13 @@ class LostFoundReport(Base):
     description     = Column(Text, default="")
     contact_person  = Column(String, nullable=False)
     created_at      = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class ScanEvent(Base):
+    __tablename__ = "Scan_Events"
+
+    id         = Column(Integer, primary_key=True, index=True)
+    animal_id  = Column(Integer, ForeignKey("Animal_Registry.id"), nullable=True)
+    scanned_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    animal = relationship("Animal")

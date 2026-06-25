@@ -14,6 +14,9 @@ def get_animal_public(animal_id: int):
         animal = db.query(models.Animal).filter(models.Animal.id == animal_id).first()
         if not animal:
             raise HTTPException(status_code=404, detail="Animal not found.")
+        scan = models.ScanEvent(animal_id=animal.id)
+        db.add(scan)
+        db.commit()
         return {
             "id":             animal.id,
             "animal_name":    animal.animal_name,

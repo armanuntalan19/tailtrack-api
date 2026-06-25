@@ -263,11 +263,29 @@ def dashboard_stats(payload: dict = Depends(get_current_user)): # all roles
         owned_animals  = db.query(func.count(models.Animal.id)).filter(models.Animal.ownership == "owned").scalar() or 0
         stray_animals  = db.query(func.count(models.Animal.id)).filter(models.Animal.ownership == "stray").scalar() or 0
 
-        # Unique animal IDs that have at least one vaccination
-        vaccinated_ids = db.query(models.Vaccination.animal_id).filter(
-            models.Vaccination.animal_id.isnot(None)
-        ).distinct().all()
-        vaccinated_count = len(vaccinated_ids)
+        from sqlalchemy import func as sqlfunc
+
+        vaccinated_by_id = set(
+            row[0]
+            for row in db.query(models.Vaccination.animal_id)
+            .filter(models.Vaccination.animal_id.isnot(None))
+            .distinct()
+            .all()
+        )
+
+        vaccinated_by_name = set(
+            row[0].strip().lower()
+            for row in db.query(sqlfunc.lower(sqlfunc.trim(models.Vaccination.animal_name)))
+            .filter(models.Vaccination.animal_name.isnot(None), models.Vaccination.animal_name != "")
+            .distinct()
+            .all()
+        )
+
+        all_animals = db.query(models.Animal).all()
+        vaccinated_count = sum(
+            1 for a in all_animals
+            if a.id in vaccinated_by_id or (a.animal_name or "").strip().lower() in vaccinated_by_name
+        )
         unvaccinated     = total_animals - vaccinated_count
         vacc_percent     = round((vaccinated_count / total_animals * 100)) if total_animals else 0
 
@@ -278,19 +296,22 @@ def dashboard_stats(payload: dict = Depends(get_current_user)): # all roles
 
         recent_qr = []
         if is_admin:
-            # Recent — last 5 animals with QR codes (Admin-only feed)
-            recent = db.query(models.Animal).filter(
-                models.Animal.qr_code != ""
-            ).order_by(models.Animal.id.desc()).limit(5).all()
+            recent_scans = (
+                db.query(models.ScanEvent, models.Animal)
+                .join(models.Animal, models.ScanEvent.animal_id == models.Animal.id, isouter=True)
+                .order_by(models.ScanEvent.scanned_at.desc())
+                .limit(5)
+                .all()
+            )
             recent_qr = [
                 {
-                    "id":      a.id,
-                    "name":    a.animal_name,
-                    "species": a.species,
-                    "qr_code": a.qr_code,
-                    "created_at": a.created_at.isoformat() if a.created_at else None,
+                    "id":      a.id if a else None,
+                    "name":    a.animal_name if a else "Unknown",
+                    "species": a.species if a else "",
+                    "qr_code": a.qr_code if a else "",
+                    "created_at": s.scanned_at.isoformat() if s.scanned_at else None,
                 }
-                for a in recent
+                for s, a in recent_scans
             ]
 
         return {
