@@ -37,11 +37,9 @@ class UpdateUserRequest(BaseModel):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # ── 1. Ensure all tables exist ────────────────────────────────
     create_tables()
     print("✅ Database tables verified / created")
 
-    # ── 2. Seed default admin if missing ─────────────────────────
     db = SessionLocal()
     try:
         admin = db.query(models.User).filter(
@@ -94,7 +92,6 @@ app.include_router(vaccinations_router.router)
 app.include_router(lostfound_router.router)
 
 
-# ── Change Password ───────────────────────────────────────────────
 @app.post("/changepass")
 def post_change_password(
     data: ChangePasswordRequest,
@@ -125,7 +122,6 @@ def post_change_password(
         db.close()
 
 
-# ── User Management ───────────────────────────────────────────────
 @app.get("/auth/users")
 def list_users(payload: dict = Depends(admin_only)):
     db = SessionLocal()
@@ -245,14 +241,8 @@ def delete_user(user_id: int, payload: dict = Depends(admin_only)):
         db.close()
 
 
-# ── Dashboard Stats ───────────────────────────────────────────────
 @app.get("/dashboard/stats")
-def dashboard_stats(payload: dict = Depends(get_current_user)): # all roles
-    """Single endpoint that returns all dashboard numbers at once.
-
-    All roles see full stats, but the 'Recent Scan Activity' feed is
-    Admin-only — non-admins never receive that part of the payload.
-    """
+def dashboard_stats(payload: dict = Depends(get_current_user)):
     is_admin = (payload.get("role") or "").upper() == "ADMIN"
 
     db = SessionLocal()
@@ -263,7 +253,15 @@ def dashboard_stats(payload: dict = Depends(get_current_user)): # all roles
         owned_animals  = db.query(func.count(models.Animal.id)).filter(models.Animal.ownership == "owned").scalar() or 0
         stray_animals  = db.query(func.count(models.Animal.id)).filter(models.Animal.ownership == "stray").scalar() or 0
 
-        from sqlalchemy import func as sqlfunc
+        vaccinated_names_raw = (
+            db.query(models.Vaccination.animal_name)
+            .filter(models.Vaccination.animal_name.isnot(None), models.Vaccination.animal_name != "")
+            .distinct()
+            .all()
+        )
+        vaccinated_name_set = set(
+            row[0].strip().lower() for row in vaccinated_names_raw if row[0]
+        )
 
         vaccinated_by_id = set(
             row[0]
@@ -273,18 +271,10 @@ def dashboard_stats(payload: dict = Depends(get_current_user)): # all roles
             .all()
         )
 
-        vaccinated_by_name = set(
-            row[0].strip().lower()
-            for row in db.query(sqlfunc.lower(sqlfunc.trim(models.Vaccination.animal_name)))
-            .filter(models.Vaccination.animal_name.isnot(None), models.Vaccination.animal_name != "")
-            .distinct()
-            .all()
-        )
-
         all_animals = db.query(models.Animal).all()
         vaccinated_count = sum(
             1 for a in all_animals
-            if a.id in vaccinated_by_id or (a.animal_name or "").strip().lower() in vaccinated_by_name
+            if a.id in vaccinated_by_id or (a.animal_name or "").strip().lower() in vaccinated_name_set
         )
         unvaccinated     = total_animals - vaccinated_count
         vacc_percent     = round((vaccinated_count / total_animals * 100)) if total_animals else 0
@@ -315,9 +305,7 @@ def dashboard_stats(payload: dict = Depends(get_current_user)): # all roles
             ]
 
         vaccinated_animal_names = sorted(set(
-            (a.animal_name or "").strip()
-            for a in all_animals
-            if a.id in vaccinated_by_id or (a.animal_name or "").strip().lower() in vaccinated_by_name
+            row[0].strip() for row in vaccinated_names_raw if row[0] and row[0].strip()
         ))
 
         return {
@@ -336,7 +324,6 @@ def dashboard_stats(payload: dict = Depends(get_current_user)): # all roles
         db.close()
 
 
-# ── Health ────────────────────────────────────────────────────────
 @app.get("/health")
 def health():
     return {"status": "ok", "app": "TailTrack API 🐾"}
