@@ -314,16 +314,23 @@ def dashboard_stats(payload: dict = Depends(get_current_user)): # all roles
                 for s, a in recent_scans
             ]
 
+        vaccinated_animal_names = sorted(set(
+            (a.animal_name or "").strip()
+            for a in all_animals
+            if a.id in vaccinated_by_id or (a.animal_name or "").strip().lower() in vaccinated_by_name
+        ))
+
         return {
-            "total_animals":     total_animals,
-            "owned_animals":     owned_animals,
-            "stray_animals":     stray_animals,
-            "vaccinated_count":  vaccinated_count,
-            "unvaccinated":      unvaccinated,
-            "vacc_percent":      vacc_percent,
-            "total_vaccinations": total_vacc,
-            "still_lost":        still_lost,
-            "recent_qr": recent_qr,
+            "total_animals":       total_animals,
+            "owned_animals":       owned_animals,
+            "stray_animals":       stray_animals,
+            "vaccinated_count":    vaccinated_count,
+            "unvaccinated":        unvaccinated,
+            "vacc_percent":        vacc_percent,
+            "total_vaccinations":  total_vacc,
+            "still_lost":          still_lost,
+            "vaccinated_animals":  vaccinated_animal_names,
+            "recent_qr":           recent_qr,
         }
     finally:
         db.close()

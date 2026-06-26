@@ -7,16 +7,17 @@ router = APIRouter(prefix="/animals", tags=["animals"])
 
 
 @router.get("/public/{animal_id}")
-def get_animal_public(animal_id: int):
+def get_animal_public(animal_id: int, noscan: int = 0):
     """Public endpoint — no auth. Used by QR code scans."""
     db = SessionLocal()
     try:
         animal = db.query(models.Animal).filter(models.Animal.id == animal_id).first()
         if not animal:
             raise HTTPException(status_code=404, detail="Animal not found.")
-        scan = models.ScanEvent(animal_id=animal.id)
-        db.add(scan)
-        db.commit()
+        if not noscan:
+            scan = models.ScanEvent(animal_id=animal.id)
+            db.add(scan)
+            db.commit()
         return {
             "id":             animal.id,
             "animal_name":    animal.animal_name,
