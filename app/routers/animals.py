@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from app.database import SessionLocal
 from app import models, schemas
 from app.deps import get_current_user, admin_or_vet, admin_only
+from datetime import datetime, timedelta, timezone
 
 router = APIRouter(prefix="/animals", tags=["animals"])
 
@@ -15,9 +16,15 @@ def get_animal_public(animal_id: int, noscan: int = 0):
         if not animal:
             raise HTTPException(status_code=404, detail="Animal not found.")
         if not noscan:
-            scan = models.ScanEvent(animal_id=animal.id)
-            db.add(scan)
-            db.commit()
+            cutoff = datetime.now(timezone.utc) - timedelta(minutes=30)
+            recent = db.query(models.ScanEvent).filter(
+                models.ScanEvent.animal_id == animal.id,
+                models.ScanEvent.scanned_at >= cutoff
+            ).first()
+            if not recent:
+                scan = models.ScanEvent(animal_id=animal.id)
+                db.add(scan)
+                db.commit()
         return {
             "id":             animal.id,
             "animal_name":    animal.animal_name,
@@ -60,7 +67,6 @@ def get_animal(animal_id: int, payload: dict = Depends(get_current_user)):
 
 @router.post("", response_model=schemas.AnimalOut, status_code=201)
 def create_animal(data: schemas.AnimalCreate, payload: dict = Depends(admin_or_vet)):
-    # Admin + Vet: add/edit. Caretaker/Viewer: view only.
     db = SessionLocal()
     try:
         if data.owner_id is not None:
@@ -104,7 +110,6 @@ def update_animal(animal_id: int, data: schemas.AnimalUpdate, payload: dict = De
 
 @router.delete("/{animal_id}")
 def delete_animal(animal_id: int, payload: dict = Depends(admin_only)):
-    # Admin only: delete
     db = SessionLocal()
     try:
         animal = db.query(models.Animal).filter(models.Animal.id == animal_id).first()
