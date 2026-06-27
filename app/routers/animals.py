@@ -67,6 +67,7 @@ def get_animal(animal_id: int, payload: dict = Depends(get_current_user)):
 
 @router.post("", response_model=schemas.AnimalOut, status_code=201)
 def create_animal(data: schemas.AnimalCreate, payload: dict = Depends(admin_or_vet)):
+    # Admin + Vet: add/edit. Caretaker/Viewer: view only.
     db = SessionLocal()
     try:
         if data.owner_id is not None:
@@ -110,12 +111,14 @@ def update_animal(animal_id: int, data: schemas.AnimalUpdate, payload: dict = De
 
 @router.delete("/{animal_id}")
 def delete_animal(animal_id: int, payload: dict = Depends(admin_only)):
+    # Admin only: delete
     db = SessionLocal()
     try:
         animal = db.query(models.Animal).filter(models.Animal.id == animal_id).first()
         if not animal:
             raise HTTPException(status_code=404, detail="Animal not found.")
 
+        db.query(models.ScanEvent).filter(models.ScanEvent.animal_id == animal_id).delete()
         db.delete(animal)
         db.commit()
         return {"message": "Animal deleted successfully."}
