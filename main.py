@@ -304,6 +304,7 @@ def dashboard_stats(payload: dict = Depends(get_current_user)):
                     "name":    a.animal_name if a else "Unknown",
                     "species": a.species if a else "",
                     "qr_code": a.qr_code if a else "",
+                    "image":   a.image if a else "",
                     "created_at": s.scanned_at.isoformat() if s.scanned_at else None,
                 }
                 for s, a in recent_scans
