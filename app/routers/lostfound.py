@@ -52,6 +52,7 @@ def create_report(data: schemas.LostFoundCreate, payload: dict = Depends(admin_o
         db.commit()
         db.refresh(report)
         sync_animal_health(db, report)
+        db.refresh(report)
         return report
     finally:
         db.close()
@@ -72,6 +73,7 @@ def update_report(report_id: int, data: schemas.LostFoundUpdate, payload: dict =
         db.refresh(report)
         if "status" in updates or "animal_id" in updates:
             sync_animal_health(db, report)
+            db.refresh(report)
         return report
     finally:
         db.close()
