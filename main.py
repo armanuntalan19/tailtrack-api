@@ -3,7 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from pydantic import BaseModel
 from typing import Optional
-from app.database import SessionLocal, create_tables
+from app.database import SessionLocal, create_tables, engine
+from sqlalchemy import text
 from app import models
 from app.routers import auth as auth_router
 from app.routers import owners as owners_router
@@ -39,6 +40,14 @@ class UpdateUserRequest(BaseModel):
 async def lifespan(app: FastAPI):
     create_tables()
     print("✅ Database tables verified / created")
+
+    try:
+        with engine.connect() as conn:
+            conn.execute(text('ALTER TABLE "Lost_Found" ADD COLUMN IF NOT EXISTS animal_id INTEGER'))
+            conn.commit()
+        print("✅ Lost_Found.animal_id column verified")
+    except Exception as e:
+        print(f"⚠️  Could not verify Lost_Found.animal_id column: {e}")
 
     db = SessionLocal()
     try:

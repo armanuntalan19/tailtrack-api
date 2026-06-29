@@ -138,6 +138,7 @@ class VaccinationOut(VaccinationBase):
 
 
 class LostFoundBase(BaseModel):
+    animal_id: int | None = None
     animal_name: str
     animal_type: str | None = "Dog"
     breed: str | None = ""
@@ -153,6 +154,7 @@ class LostFoundCreate(LostFoundBase):
 
 
 class LostFoundUpdate(BaseModel):
+    animal_id: int | None = None
     animal_name: str | None = None
     animal_type: str | None = None
     breed: str | None = None

@@ -1,9 +1,23 @@
 from fastapi import APIRouter, HTTPException, Depends
+from sqlalchemy import func
 from app.database import SessionLocal
 from app import models, schemas
 from app.deps import get_current_user, admin_only, admin_or_caretaker
 
 router = APIRouter(prefix="/lost-found", tags=["lost-and-found"])
+
+
+def sync_animal_health(db, report):
+    animal = None
+    if report.animal_id:
+        animal = db.query(models.Animal).filter(models.Animal.id == report.animal_id).first()
+    if not animal and report.animal_name:
+        animal = db.query(models.Animal).filter(
+            func.lower(models.Animal.animal_name) == report.animal_name.strip().lower()
+        ).first()
+    if animal:
+        animal.health_status = "missing" if report.status == "lost" else "safe"
+        db.commit()
 
 
 @router.get("", response_model=list[schemas.LostFoundOut])
@@ -37,6 +51,7 @@ def create_report(data: schemas.LostFoundCreate, payload: dict = Depends(admin_o
         db.add(report)
         db.commit()
         db.refresh(report)
+        sync_animal_health(db, report)
         return report
     finally:
         db.close()
@@ -50,10 +65,13 @@ def update_report(report_id: int, data: schemas.LostFoundUpdate, payload: dict =
         report = db.query(models.LostFoundReport).filter(models.LostFoundReport.id == report_id).first()
         if not report:
             raise HTTPException(status_code=404, detail="Report not found.")
-        for field, value in data.dict(exclude_unset=True).items():
+        updates = data.dict(exclude_unset=True)
+        for field, value in updates.items():
             setattr(report, field, value)
         db.commit()
         db.refresh(report)
+        if "status" in updates or "animal_id" in updates:
+            sync_animal_health(db, report)
         return report
     finally:
         db.close()

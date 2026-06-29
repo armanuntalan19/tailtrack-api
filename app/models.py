@@ -78,6 +78,7 @@ class LostFoundReport(Base):
     __tablename__ = "Lost_Found"
 
     id              = Column(Integer, primary_key=True, index=True)
+    animal_id       = Column(Integer, ForeignKey("Animal_Registry.id"), nullable=True)
     animal_name     = Column(String, nullable=False)
     animal_type     = Column(String, default="Dog")
     breed           = Column(String, default="")
